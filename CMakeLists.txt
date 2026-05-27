@@ -25,6 +25,12 @@ FetchContent_MakeAvailable(raylib)
 
 add_executable(${PROJECT_NAME}
         main.cpp
+        src/random.h
+        src/screen.h
+        src/MenuScreen.h
+        src/MenuScreen.cpp
+        src/NumberPicker.cpp
+        src/NumberPicker.h
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
