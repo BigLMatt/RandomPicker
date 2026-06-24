@@ -27,7 +27,7 @@ void NumberPicker::Update(Screen& current) {
     }
 
     // Roll button
-    Rectangle rollBtn = {300, 270, 200, 50};
+    constexpr Rectangle rollBtn = {300, 270, 200, 50};
     if (CheckCollisionPointRec(GetMousePosition(), rollBtn)
         && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         m_max = atoi(m_inputBuf);
@@ -36,25 +36,25 @@ void NumberPicker::Update(Screen& current) {
         }
 }
 
-void NumberPicker::Draw() const {
-    DrawText("Number Picker", 300, 80, 28, WHITE);
+void NumberPicker::Draw(const Resources& res) const {
+    DrawTextEx(res.font,"Number Picker", {300, 80}, 28,2, WHITE);
 
     // Input label
-    DrawText("Max number:", 300, 175, 20, LIGHTGRAY);
+    DrawTextEx(res.font,"Max number:", {300, 175}, 20,2, LIGHTGRAY);
 
     // Input box
     DrawRectangleRec({300, 200, 200, 40}, DARKGRAY);
-    DrawText(m_inputBuf, 310, 210, 20, WHITE);
+    DrawTextEx(res.font,m_inputBuf, {310, 210}, 20,2, WHITE);
 
     // Roll button
-    Rectangle rollBtn = {300, 270, 200, 50};
+    constexpr Rectangle rollBtn = {300, 270, 200, 50};
     bool hovered = CheckCollisionPointRec(GetMousePosition(), rollBtn);
     DrawRectangleRec(rollBtn, hovered ? DARKGRAY : GRAY);
-    DrawText("Roll", 375, 285, 20, WHITE);
+    DrawTextEx(res.font,"Roll", {375, 285}, 20,2, WHITE);
 
     // Result
     if (m_result >= 0)
-        DrawText(TextFormat("Result: %d", m_result), 340, 150, 32, GOLD);  // boven het vak
+        DrawTextEx(res.font, TextFormat("Result: %d", m_result), {340, 150}, 32, 3, GOLD);  // boven het vak
 
-    DrawText("ESC = back", 10, 570, 16, GRAY);
+    DrawTextEx(res.font,"ESC = back",  {10, 570}, 16,2, GRAY);
 }

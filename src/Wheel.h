@@ -6,12 +6,13 @@
 #include <cstring>
 #include <string_view>
 #include <vector>
+#include "Resources.h"
 
 class Wheel {
 public:
     Wheel();
     void Update(Screen& current);
-    void Draw() const;
+    void Draw(const Resources& res) const;
 
 private:
     std::string result {};

@@ -1,12 +1,13 @@
 #pragma once
 #include "raylib.h"
 #include "Screen.h"
+#include "Resources.h"
 
 class NumberPicker {
 public:
     NumberPicker();
     void Update(Screen& current);
-    void Draw() const;
+    void Draw(const Resources& res) const;
 
 private:
     int m_max       { 100 };   // user-controlled

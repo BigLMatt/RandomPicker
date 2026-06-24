@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include "Screen.h"
+#include "Resources.h"
 
 struct Button {
     Rectangle rect;
@@ -12,7 +13,7 @@ class MenuScreen {
 public:
     MenuScreen();
     void Update(Screen& current);
-    void Draw() const;
+    void Draw(const Resources& res) const;
 private:
     Button buttons[4];
 };
