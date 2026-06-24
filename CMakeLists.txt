@@ -31,6 +31,8 @@ add_executable(${PROJECT_NAME}
         src/MenuScreen.cpp
         src/NumberPicker.cpp
         src/NumberPicker.h
+        src/Wheel.cpp
+        src/Wheel.h
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)

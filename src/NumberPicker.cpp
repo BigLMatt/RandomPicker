@@ -1,9 +1,8 @@
 #include "NumberPicker.h"
 #include "Random.h"
 #include <cstring>
-#include <cstdlib>
 
-NumberPicker::NumberPicker() {}
+NumberPicker::NumberPicker() = default;
 
 void NumberPicker::Update(Screen& current) {
     if (IsKeyPressed(KEY_ESCAPE)) {
@@ -14,16 +13,16 @@ void NumberPicker::Update(Screen& current) {
     // Text input
     int key = GetCharPressed();
     while (key > 0) {
-        int len = strlen(m_inputBuf);
+        int len = static_cast<int>(std::strlen(m_inputBuf));
         if (key >= '0' && key <= '9' && len < 7) {
-            m_inputBuf[len]     = (char)key;
+            m_inputBuf[len] = (char)key;
             m_inputBuf[len + 1] = '\0';
         }
         key = GetCharPressed();
     }
 
     if (IsKeyPressed(KEY_BACKSPACE)) {
-        int len = strlen(m_inputBuf);
+        int len = static_cast<int>(strlen(m_inputBuf));
         if (len > 0) m_inputBuf[len - 1] = '\0';
     }
 

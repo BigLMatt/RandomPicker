@@ -9,7 +9,7 @@ MenuScreen::MenuScreen() {
 }
 
 void MenuScreen::Update(Screen& current) {
-    for (auto& btn : buttons) {
+    for (const auto& btn : buttons) {
         if (CheckCollisionPointRec(GetMousePosition(), btn.rect)
             && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             current = btn.target;
@@ -19,7 +19,7 @@ void MenuScreen::Update(Screen& current) {
 
 void MenuScreen::Draw() const {
     for (auto& btn : buttons) {
-        bool hovered = CheckCollisionPointRec(GetMousePosition(), btn.rect);
+        const bool hovered = CheckCollisionPointRec(GetMousePosition(), btn.rect);
         DrawRectangleRec(btn.rect, hovered ? DARKGRAY : GRAY);
         DrawText(btn.label, btn.rect.x + 10, btn.rect.y + 15, 20, WHITE);
     }
