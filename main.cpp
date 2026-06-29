@@ -3,6 +3,8 @@
 #include "src/MenuScreen.h"
 #include "src/NumberPicker.h"
 #include "src/Wheel.h"
+#include "src/Dice.h"
+#include "src/SlotMachine.h"
 #include "src/Resources.h"
 
 int main() {
@@ -10,14 +12,19 @@ int main() {
     SetTargetFPS(60);
 
     Resources res{};
-    res.font = LoadFont("fonts/coolvetica_regular.otf");
-    if (res.font.texture.id == 0)
+    res.regularFont = LoadFontEx("Resources/fonts/coolvetica_regular.otf", 40, nullptr, 0);
+    res.titleFont = LoadFontEx("Resources/fonts/bronco.ttf",96,nullptr,0);
+    if (res.regularFont.texture.id == 0)
         TraceLog(LOG_WARNING, "Font failed to load!");
+
+    res.slotMachine = LoadModel("Resources/models/Slot1.glb");
 
     Screen current = Screen::MENU;
     MenuScreen menu;
     NumberPicker numberPicker;
     Wheel wheel;
+    Dice dice;
+    SlotMachine slots;
     SetExitKey(KEY_NULL);
 
     while (!WindowShouldClose()) {
@@ -35,8 +42,10 @@ int main() {
             case Screen::COIN:
                 break;
             case Screen::DICE:
+                dice.Update(current);
                 break;
             case Screen::SLOTS:
+                slots.Update(current, res);
                 break;
         }
 
@@ -54,8 +63,10 @@ int main() {
             case Screen::COIN:
                 break;
             case Screen::DICE:
+                dice.Draw(res);
                 break;
             case Screen::SLOTS:
+                slots.Draw(res);
                 break;
             case Screen::WHEEL:
                 wheel.Draw(res);
@@ -65,7 +76,8 @@ int main() {
         EndDrawing();
     }
 
-    UnloadFont(res.font);
+    UnloadFont(res.regularFont);
+    UnloadModel(res.slotMachine);
     CloseWindow();
     return 0;
 }

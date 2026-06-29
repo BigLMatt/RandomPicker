@@ -34,6 +34,10 @@ add_executable(${PROJECT_NAME}
         src/Wheel.cpp
         src/Wheel.h
         src/Resources.h
+        src/Dice.cpp
+        src/Dice.h
+        src/SlotMachine.cpp
+        src/SlotMachine.h
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
@@ -41,8 +45,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 # Copy fonts to build directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/fonts
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>/fonts
+        ${CMAKE_SOURCE_DIR}/Resources
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/Resources
 )
 
 

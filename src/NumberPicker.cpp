@@ -37,24 +37,24 @@ void NumberPicker::Update(Screen& current) {
 }
 
 void NumberPicker::Draw(const Resources& res) const {
-    DrawTextEx(res.font,"Number Picker", {300, 80}, 28,2, WHITE);
+    DrawTextEx(res.regularFont,"Number Picker", {300, 80}, 28,2, WHITE);
 
     // Input label
-    DrawTextEx(res.font,"Max number:", {300, 175}, 20,2, LIGHTGRAY);
+    DrawTextEx(res.regularFont,"Max number:", {300, 175}, 20,2, LIGHTGRAY);
 
     // Input box
     DrawRectangleRec({300, 200, 200, 40}, DARKGRAY);
-    DrawTextEx(res.font,m_inputBuf, {310, 210}, 20,2, WHITE);
+    DrawTextEx(res.regularFont,m_inputBuf, {310, 210}, 20,2, WHITE);
 
     // Roll button
     constexpr Rectangle rollBtn = {300, 270, 200, 50};
     bool hovered = CheckCollisionPointRec(GetMousePosition(), rollBtn);
     DrawRectangleRec(rollBtn, hovered ? DARKGRAY : GRAY);
-    DrawTextEx(res.font,"Roll", {375, 285}, 20,2, WHITE);
+    DrawTextEx(res.regularFont,"Roll", {375, 285}, 20,2, WHITE);
 
     // Result
     if (m_result >= 0)
-        DrawTextEx(res.font, TextFormat("Result: %d", m_result), {340, 150}, 32, 3, GOLD);  // boven het vak
+        DrawTextEx(res.regularFont, TextFormat("Result: %d", m_result), {340, 150}, 32, 3, GOLD);  // boven het vak
 
-    DrawTextEx(res.font,"ESC = back",  {10, 570}, 16,2, GRAY);
+    DrawTextEx(res.regularFont,"ESC = back",  {10, 570}, 16,2, GRAY);
 }

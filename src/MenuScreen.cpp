@@ -21,6 +21,6 @@ void MenuScreen::Draw(const Resources& res) const {
     for (auto& btn : buttons) {
         const bool hovered = CheckCollisionPointRec(GetMousePosition(), btn.rect);
         DrawRectangleRec(btn.rect, hovered ? DARKGRAY : GRAY);
-        DrawTextEx(res.font, btn.label, {btn.rect.x + 10, btn.rect.y + 15}, 20, 2, WHITE);
+        DrawTextEx(res.regularFont, btn.label, {btn.rect.x + 10, btn.rect.y + 15}, 20, 2, WHITE);
     }
 }

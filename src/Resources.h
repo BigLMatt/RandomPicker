@@ -1,5 +1,8 @@
 #pragma once
 
 struct Resources {
-    Font font;
+    Font regularFont;
+    Font titleFont;
+
+    Model slotMachine;
 };
