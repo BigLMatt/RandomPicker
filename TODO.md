@@ -1,0 +1,31 @@
+## Fixes
+- [ ] Fix shown result of slots
+- [ ] Update list on backside cylinder
+- [ ] Fix layout
+- [ ] Draw cylinder from the start
+- [ ] Render objects properly
+- [ ] Give an error if entry already exists
+## Features
+- [ ] x-sided die or coin (from 2-20) with random movement animation
+- [ ] Make physics simulation of dice
+- [ ] random name picker slot machine
+- [ ] Press enter twice to get result immediately
+- [x] Hold enter to keep spinning
+- [ ] set speed of animations, suspense mode
+- [ ] dropdown or sidebar for selection randomizer
+- [ ] easy and fast use, startup time under 2s and result possible within 5s when started so easy GUI
+- [ ] boxes for filling in numbers or text
+- [ ] easy to find executable in folder that is not in the way
+- [ ] slot machine with characters
+- [ ] wheel of names
+- [ ] percentage random (float with 4 numbers like 99,99%)
+- [ ] App icon
+- [ ] Homescreen with renders of all the objects (wheel, dice, slotmachine) float around and rotate click on them to choose animates flying towards them and UI floats in.
+- [ ] Remember last chosen method and open on this.
+- [ ] Password protected/encrypted previous options.
+- [ ] Slowly rotating dice.
+- [ ] Arrow selection left right for dice
+- [ ] Panning around objects (dice locked on user in 3D)
+- [ ] Texturing objects
+- [ ] Lighting
+- [ ] Linear ramp down of speed in coasting mode slots

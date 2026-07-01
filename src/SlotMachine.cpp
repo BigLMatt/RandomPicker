@@ -1,8 +1,9 @@
 #include "SlotMachine.h"
 #include "Random.h"
+#define DEBUG
 
 SlotMachine::SlotMachine() {
-    m_camera.position   = {0.0f, 3.0f, 8.0f};
+    m_camera.position   = {0.0f, 3.5f, 7.0f};
     m_camera.target     = {0.0f, 0.0f, 0.0f};
     m_camera.up         = {0.0f, 1.0f, 0.0f};
     m_camera.fovy       = 45.0f;
@@ -22,23 +23,11 @@ void SlotMachine::UnloadReel() {
 }
 
 void SlotMachine::RebuildReel(const Font& font) {
-    constexpr int TOTAL_SEGMENTS = 18;
+    constexpr int TOTAL_SEGMENTS = SEGMENTS;
     constexpr int segmentHeight  = 60;
     constexpr int texHeight      = TOTAL_SEGMENTS * segmentHeight;
 
     UnloadReel();
-
-    if (options.empty()) {
-        // Draw 18 empty segments
-        BeginTextureMode(m_reel);
-        ClearBackground(DARKGRAY);
-        for (int i = 0; i < TOTAL_SEGMENTS; i++) {
-            Color bg = (i % 2 == 0) ? Color{40,40,60,255} : Color{30,30,50,255};
-            DrawRectangle(0, i * segmentHeight, 256, segmentHeight, bg);
-            DrawLine(0, i * segmentHeight, 256, i * segmentHeight, GRAY);
-        }
-        EndTextureMode();
-    }
 
     m_reel = LoadRenderTexture(256, texHeight);
 
@@ -46,19 +35,21 @@ void SlotMachine::RebuildReel(const Font& font) {
     BeginTextureMode(m_reel);
         ClearBackground(DARKGRAY);
         for (int i {0}; i < TOTAL_SEGMENTS; i++) {
-            // Cycle through options sequentially
-            const std::string& label = options[i % options.size()];
-            const auto y = static_cast<float>(i * segmentHeight);
+
+            const int segmentIndex {TOTAL_SEGMENTS-1-i};
 
             // Alternate background colour
-            const Color bg {(i % 2 == 0) ? Color{40,40,60,255} : Color{30,30,50,255}};
-            DrawRectangle(0,static_cast<int>(y), 256, segmentHeight, bg);
+            const Color bg {(segmentIndex % 2 == 0) ? Color{40,40,60,255} : Color{30,30,50,255}};
+            DrawRectangle(0,i * segmentHeight, 256, segmentHeight, bg);
 
             // Dividing line
-            DrawLine(0,static_cast<int>(y), 256, static_cast<int>(y), GRAY);
+            DrawLine(0,i * segmentHeight, 256, i * segmentHeight, GRAY);
 
-            // Text centered vertically in segment
-            DrawTextEx(font, label.c_str(), {10.0f, y + 16.0f}, 24, 2, WHITE);
+            // Only draw text if we have options
+            if (!options.empty()) {
+                const std::string& label = options[segmentIndex % options.size()];
+                DrawTextEx(font, label.c_str(), {10.0f, static_cast<float>(i) * segmentHeight + 16.0f}, 24, 2, WHITE);
+            }
         }
     EndTextureMode();
 
@@ -77,6 +68,21 @@ void SlotMachine::Update(Screen& current, const Resources& res) {
         current = Screen::MENU;
         return;
     }
+    // Orbit camera with middle mouse button drag
+    if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON) && !IsKeyDown(KEY_LEFT_SHIFT)) {
+        const auto [x, y] {GetMouseDelta()};
+        CameraYaw(&m_camera, -x * 0.003f, true);
+        CameraPitch(&m_camera, -y * 0.003f, true, true, false);
+    }
+    if (IsMouseButtonDown(MOUSE_MIDDLE_BUTTON) && IsKeyDown(KEY_LEFT_SHIFT)) {
+        const auto [x, y] {GetMouseDelta()};
+        CameraMoveUp(&m_camera, y * 0.01f);
+        CameraMoveRight(&m_camera, -x * 0.01f, true);
+    }
+
+    // Zoom with scroll wheel
+    if (const float wheel = GetMouseWheelMove(); wheel != 0)
+        CameraMoveToTarget(&m_camera, -wheel);
 
 
     // Cursor activation
@@ -95,7 +101,7 @@ void SlotMachine::Update(Screen& current, const Resources& res) {
         key = GetCharPressed();
     }
 
-    int len = static_cast<int>(strlen(m_inputBuf));
+    int len {static_cast<int>(strlen(m_inputBuf))};
 
     // Arrow key navigation
     if ((IsKeyPressed(KEY_RIGHT)||IsKeyPressedRepeat(KEY_RIGHT)) && len > cursorLocation) {
@@ -125,51 +131,79 @@ void SlotMachine::Update(Screen& current, const Resources& res) {
     bool justAdded {false};
 
     // Add button
-    if ((CheckCollisionPointRec(GetMousePosition(), addButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
+    if ((CheckCollisionPointRec(GetMousePosition(), ADD_BUTTON) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && m_inputActive) ||
         IsKeyPressed(KEY_ENTER)) {
         if (strlen(m_inputBuf) > 0) {
-            options.emplace_back(m_inputBuf);
+            options.emplace(options.begin(), m_inputBuf);
             m_inputBuf[0] = '\0';
             cursorLocation = 0;
             justAdded = true;
             RebuildReel(res.regularFont);  // rebuild texture with new option
+            m_state = ReelState::IDLE;
         }
     }
 
     // Spin button
-    if (!justAdded && (CheckCollisionPointRec(GetMousePosition(), spinButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
+    if (!justAdded && (CheckCollisionPointCircle(GetMousePosition(), SPIN_BUTTON, 25) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
         ((IsKeyPressed(KEY_ENTER) || IsKeyPressedRepeat(KEY_ENTER)) && len == 0)) {
         if (!options.empty()) {
-            m_targetIndex = Random::randInt(0, static_cast<int>(options.size() - 1));
-            result = options[m_targetIndex];
-            m_scrollSpeed = 1200.0f;  // start fast
-            m_spinning = true;
+            m_targetOption = {Random::randInt(0, static_cast<int>(options.size()) - 1)};
+            result = options[m_targetOption];
+
+            m_scrollSpeed = static_cast<float>(Random::randInt(900, 1500));
+            m_decelFactor = 0.965f + static_cast<float>(Random::randInt(0, 20)) * 0.001f;
+            m_state = ReelState::SPINNING;
             }
         }
 
     // Reset button
-    if (CheckCollisionPointRec(GetMousePosition(), resetButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    if (CheckCollisionPointRec(GetMousePosition(), RESET_BUTTON) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         options = {};
         RebuildReel(res.regularFont);
+        m_state = ReelState::EMPTY;
         }
+
 
     // Scroll animation
-    if (m_spinning) {
+    switch (m_state) {
+        case ReelState::SPINNING:
         m_reelAngle += m_scrollSpeed * GetFrameTime();
-        m_scrollSpeed *= 0.98f;  // gradually slow down
+        m_scrollSpeed *= m_decelFactor;
 
         // Check if slow enough to stop
-        if (m_scrollSpeed < 10.0f) {
-            m_spinning = false;
-            // Snap to nearest item
-            const float anglePerItem = 360.0f / static_cast<float>(options.size());
-            m_reelAngle = static_cast<float>(m_targetIndex) * anglePerItem;
-        }
-    }
+        if (m_scrollSpeed < 25.0f) {
+            m_scrollSpeed = 25.0f;
+            const int currentStep {static_cast<int>(m_reelAngle/ ANGLE_PER_SEGMENT)};
 
-    // Idle slow rotation when options are loaded
-    if (!m_spinning && m_reelReady)
-        m_reelAngle += 20.0f * GetFrameTime();  // 15 degrees per second
+            // Add extra segments crossed minimum to coast out
+            const int extraSegments {Random::randInt(1, 5)};
+            const int searchFrom {currentStep + extraSegments};
+
+            // How many segments after search start
+            const int optSize {static_cast<int>(options.size())};
+            const int stepsUntilMatch {(m_targetOption - searchFrom % optSize + optSize) % optSize};
+            m_targetIndex = searchFrom + stepsUntilMatch;
+
+            m_state = ReelState::COASTING;
+        }
+        break;
+        case ReelState::COASTING:
+            // Coast to selected item
+            m_reelAngle += m_scrollSpeed * GetFrameTime();
+            if (const float targetAngle = static_cast<float>(m_targetIndex) * ANGLE_PER_SEGMENT; m_reelAngle >= targetAngle) {
+                m_reelAngle = targetAngle;
+                m_state = ReelState::SETTLED;
+            }
+            break;
+        case ReelState::IDLE:
+            m_reelAngle += 20.0f * GetFrameTime();
+            break;
+        case ReelState::EMPTY:
+            m_reelAngle = 0.0f;
+            break;
+        case ReelState::SETTLED:
+            break;
+    }
 }
 
 void SlotMachine::Draw(const Resources &res) const {
@@ -180,7 +214,7 @@ void SlotMachine::Draw(const Resources &res) const {
         // Slotmachine model and reel
         DrawModelEx(res.slotMachine, {0,-1,0}, {0,1,0}, -90.0f,{1,1,1}, WHITE);
         if (m_reelReady) {
-            DrawModelEx(m_cylinder, {0.0f,0.2f,0.3f}, {1,0,0}, m_reelAngle, {0.5f,0.5f,0.5f}, WHITE);
+            DrawModelEx(m_cylinder, {-0.65f,0.6f,-0.6f}, {1,0,0}, m_reelAngle + FRONT_OFFSET, {0.5f,0.5f,0.5f}, WHITE);
         }
     EndMode3D();
 
@@ -201,19 +235,40 @@ void SlotMachine::Draw(const Resources &res) const {
     if (m_inputActive && static_cast<int>(GetTime() * 2) % 2 == 0)
         DrawRectangle(cursorX, 512, 2, 18, WHITE);
 
+    if (m_state == ReelState::SETTLED) {
+        DrawTextEx(res.regularFont, "Result:", {100,100},40,2,GOLD);
+        DrawTextEx(res.regularFont, result.c_str(), {100,150},40,2,GOLD);
+    }
+
     // Add button
-    const bool hovered_add = CheckCollisionPointRec(GetMousePosition(), addButton);
-    DrawRectangleRec(addButton, hovered_add ? DARKGRAY : GRAY);
+    const bool hovered_add = CheckCollisionPointRec(GetMousePosition(), ADD_BUTTON);
+    DrawRectangleRec(ADD_BUTTON, hovered_add ? DARKGRAY : GRAY);
     DrawTextEx(res.regularFont, "Add", {529, 510}, 20, 2, WHITE);
 
     // Spin button
-    const bool hovered_spin = CheckCollisionPointRec(GetMousePosition(), spinButton);
-    DrawRectangleRec(spinButton, hovered_spin ? DARKGRAY : GRAY);
-    DrawTextEx(res.regularFont,"Spin", {140, 345}, 20, 2, WHITE);
+    const bool hovered_spin = CheckCollisionPointCircle(GetMousePosition(), SPIN_BUTTON,25);
+    DrawCircleV(SPIN_BUTTON, 25,hovered_spin ? DARKBROWN : RED);
 
     // Reset button
-    const bool hovered_reset = CheckCollisionPointRec(GetMousePosition(), resetButton);
-    DrawRectangleRec(resetButton, hovered_reset ? DARKGRAY : GRAY);
+    const bool hovered_reset = CheckCollisionPointRec(GetMousePosition(), RESET_BUTTON);
+    DrawRectangleRec(RESET_BUTTON, hovered_reset ? DARKGRAY : GRAY);
     DrawTextEx(res.regularFont,"Reset", {595, 510}, 20, 2, WHITE);
 
+#ifdef DEBUG
+    // Debug overlay
+    constexpr float anglePerItem = 360.0f / static_cast<float>(SEGMENTS);
+    const float targetAngle = static_cast<float>(m_targetIndex) * anglePerItem;
+    const int currentStep = static_cast<int>(m_reelAngle / anglePerItem);
+    const int currentSegment = ((currentStep % SEGMENTS) + SEGMENTS) % SEGMENTS;
+    const int currentOption = options.empty() ? -1 : currentSegment % static_cast<int>(options.size());
+
+    DrawTextEx(res.regularFont, TextFormat("reelAngle:    %.1f", m_reelAngle),        {10, 10}, 18, 2, RED);
+    DrawTextEx(res.regularFont, TextFormat("targetAngle:  %.1f", targetAngle),         {10, 30}, 18, 2, RED);
+    DrawTextEx(res.regularFont, TextFormat("currentStep:  %d",   currentStep),         {10, 50}, 18, 2, RED);
+    DrawTextEx(res.regularFont, TextFormat("targetIndex:  %d",   m_targetIndex),       {10, 70}, 18, 2, RED);
+    DrawTextEx(res.regularFont, TextFormat("currSegment:  %d",   currentSegment),      {10, 90}, 18, 2, RED);
+    DrawTextEx(res.regularFont, TextFormat("currOption:   %d",   currentOption),       {10,110}, 18, 2, RED);
+    DrawTextEx(res.regularFont, TextFormat("result:       %s",   result.c_str()),      {10,130}, 18, 2, RED);
+    DrawTextEx(res.regularFont, TextFormat("scrollSpeed:  %.1f", m_scrollSpeed),       {10,150}, 18, 2, RED);
+#endif
 }

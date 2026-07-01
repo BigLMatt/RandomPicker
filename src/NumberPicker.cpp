@@ -37,7 +37,7 @@ void NumberPicker::Update(Screen& current) {
 }
 
 void NumberPicker::Draw(const Resources& res) const {
-    DrawTextEx(res.regularFont,"Number Picker", {300, 80}, 28,2, WHITE);
+    DrawTextEx(res.titleFont,"Number Picker", {300, 80}, 28,2, WHITE);
 
     // Input label
     DrawTextEx(res.regularFont,"Max number:", {300, 175}, 20,2, LIGHTGRAY);
